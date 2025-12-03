@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動教學：條件語句 (Conditional Statements)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f0f4f8; color: #4a4a4a; }
+        .code-block { font-family: 'Courier New', Courier, monospace; }
+        .flowchart-diamond {
+            width: 80px; height: 80px; transform: rotate(45deg);
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid #d97706; background-color: #fffbeb;
+            margin: 20px auto;
+            transition: all 0.2s ease-in-out; /* Add transition for smoothness */
+        }
+        .flowchart-content { transform: rotate(-45deg); text-align: center; width: 100%; font-size: 0.8rem; font-weight: bold; }
+        .flowchart-rect {
+            border: 2px solid #3b82f6; background-color: #eff6ff;
+            padding: 10px; border-radius: 8px; width: 120px; text-align: center; font-size: 0.9rem;
+            margin: 10px auto;
+            transition: all 0.2s ease-in-out; /* Add transition for smoothness */
+        }
+        /* Enhanced Arrow Styling for Flowcharts */
+        .arrow-path { position: relative; width: 100%; height: 20px; text-align: center; }
+        .arrow-path::after { content: '▼'; position: absolute; left: 50%; top: 0; transform: translateX(-50%); font-size: 16px; color: #9ca3af; } 
+        
+        /* New Merge Component for Cleaner Junctions */
+        .flow-merge-point { @apply w-full flex justify-center h-8 relative; }
+        .flow-merge-point .path-line-left { @apply absolute w-1/2 h-full border-b-2 border-l-2 border-gray-400 top-0 left-0 rounded-bl-lg; transition: border-color 0.2s; }
+        .flow-merge-point .path-line-right { @apply absolute w-1/2 h-full border-b-2 border-r-2 border-gray-400 top-0 right-0 rounded-br-lg; transition: border-color 0.2s; }
+        .flow-merge-point .arrow-head { @apply absolute bottom-0 text-xl text-gray-400; }
+        
+        /* Highlight for Code Simulation - STRONGER VISIBILITY */
+        .highlight-line { 
+            background-color: #fcd34d; /* Amber 300 - Much more noticeable */
+            transition: background-color 0.1s; 
+        }
+        
+        /* Enhanced Visuals for True Path in Flowchart (Per user request) */
+        .flowchart-diamond.true-path {
+            background-color: #34d399 !important; /* Emerald 400 */
+            border-color: #059669 !important; /* Emerald 600 */
+        }
+        .flowchart-rect.true-action {
+            opacity: 1 !important;
+            background-color: #a7f3d0 !important; /* Green 300 */
+            border-color: #059669 !important; /* Green 600 */
+            font-weight: bold;
+        }
+
+        /* --- NEW SIMULATOR STYLES --- */
+        .status-box {
+            /* Applied via JS, but base style needed */
+            @apply p-3 rounded-xl shadow-md font-medium w-32;
+            border: 1px solid currentColor;
+        }
+
+        /* Animation for time pulse */
+        @keyframes pulse-time {
+            0%, 100% { transform: scale(1); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+            50% { transform: scale(1.005); box-shadow: 0 0 15px 5px rgba(252, 211, 77, 0.6); } /* Stronger yellow glow */
+        }
+        .animate-pulse-time {
+            animation: pulse-time 0.5s ease-in-out;
+        }
+
+        /* Chart Container Styling - Mandatory */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container { height: 350px; }
+        }
+
+        /* Simulator Specific Styles */
+        .time-display-sim {
+            background-color: #334155;
+            color: #fcd34d;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        /* Quiz Input Styling - Generic */
+        .quiz-input-field {
+            @apply w-12 text-center border-b-2 border-gray-400 bg-transparent focus:outline-none;
+        }
+
+        /* Quiz 2 Specific Styling (Text Box Style - Now Deprecated, kept for reference) */
+        .quiz-box-input {
+            @apply bg-white border border-gray-300 rounded px-3 py-1 text-center text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder-gray-400 font-mono;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="max-w-4xl mx-auto mb-10 text-center">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">條件語句互動實驗室 (及格分數: 50)</h1>
+        <p class="text-lg text-gray-600">教案主題：學會讓電腦做決定 (Conditional Statements)</p>
+        <div class="mt-4 flex flex-wrap justify-center gap-4 text-sm text-gray-500">
+            <span class="bg-white px-3 py-1 rounded shadow-sm border border-gray-200">⏱ 時長：35 分鐘</span>
+            <span class="bg-white px-3 py-1 rounded shadow-sm border border-gray-200">🐍 語言：Python</span>
+            <span class="bg-white px-3 py-1 rounded shadow-sm border border-gray-200">🎯 目標：條件語句的邏輯和語法</span>
+        </div>
+    </header>
+
+    <section class="max-w-4xl mx-auto mb-12 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden p-6 md:p-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center border-b pb-4">情境選擇:上學出行模擬器</h2>
+        <p class="text-gray-600 mb-6 text-center">
+            這是一個複雜的**多層條件判斷**應用。你需要在9:30前回到學校，你的每個選擇都會影響你的時間 (time) 和狀態 (state)，最終決定你的結局。
+        </p>
+
+        <div id="simulator-app" class="w-full bg-stone-50 rounded-lg p-6 md:p-8 border border-stone-200 transition-all duration-300">
+            <div class="flex justify-between items-center mb-6">
+                <div class="time-display-sim">
+                    ⏰ 時間: <span id="current-time-sim">08:40</span>
+                </div>
+                <h1 class="text-xl font-bold text-gray-800">🚦 決策中...</h1>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4 mb-8 text-center">
+                <div id="weather-status-sim" class="status-box bg-gray-100 text-gray-800 transition duration-300">
+                    <span class="text-2xl">❓</span><br>天氣狀態
+                </div>
+                <div id="umbrella-status-sim" class="status-box bg-gray-100 text-gray-800 transition duration-300">
+                    <span class="text-2xl">❓</span><br>雨傘狀態
+                </div>
+                <div id="state-status-sim" class="status-box bg-yellow-100 text-yellow-800 transition duration-300">
+                    <span class="text-2xl">🏃</span><br>個人狀態
+                </div>
+            </div>
+
+
+            <div id="game-content-sim">
+                <p id="scenario-text-sim" class="text-lg mb-8 text-gray-700 leading-relaxed"></p>
+
+                <div id="choice-buttons-sim" class="space-y-4">
+                    </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="max-w-4xl mx-auto mb-12 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 md:p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">1. 判斷標準：布林值 (Boolean)</h2>
+            <p class="text-gray-600 mb-6">
+                電腦只懂兩種回答：<span class="font-mono text-blue-600 font-bold">True (真)</span> 與 <span class="font-mono text-red-500 font-bold">False (假)</span>。
+                請輸入<b>數字</b>或<b>文字</b>，並選擇操作符來進行比較。
+            </p>
+
+            <div class="bg-slate-800 text-white p-6 rounded-xl shadow-inner">
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                    <input type="text" id="bool-num1" value="10" class="w-36 text-center bg-slate-700 border border-slate-600 rounded p-2 text-xl font-mono focus:outline-none focus:border-blue-500" oninput="checkBoolean()">
+                    
+                    <select id="bool-op" class="bg-slate-700 border border-slate-600 rounded p-2 text-xl font-mono cursor-pointer focus:outline-none focus:border-blue-500" onchange="checkBoolean()">
+                        <option value=">">&gt; (大於)</option>
+                        <option value="<">&lt; (小於)</option>
+                        <option value="==">== (等於)</option>
+                        <option value="!=">!= (不等於)</option>
+                        <option value=">=">&gt;= (大於等於)</option>
+                        <option value="<=">&lt;= (小於等於)</option>
+                    </select>
+                    
+                    <input type="text" id="bool-num2" value="Hello" class="w-36 text-center bg-slate-700 border border-slate-600 rounded p-2 text-xl font-mono focus:outline-none focus:border-blue-500" oninput="checkBoolean()">
+                    
+                    <div class="text-2xl font-mono">➡</div>
+                    <div id="bool-result" class="text-3xl font-mono font-bold text-green-400">False</div>
+                </div>
+                <p class="text-center text-slate-400 mt-4 text-sm">試著修改兩側的值 (數字/文字) 或符號，看看電腦如何判斷！</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="max-w-4xl mx-auto mb-12 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 md:p-8 border-b border-gray-100">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">2. 為什麼需要「條件」？</h2>
+            <p class="text-gray-600 mb-6 leading-relaxed">
+                程式的核心在於<b>做決定</b>。就像在日常生活中，我們無時無刻不在根據情況做出選擇。
+                <br>這就是程式中的<b>「條件語句」</b>。
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="bg-stone-50 p-6 rounded-lg">
+                    <h3 class="font-bold text-gray-700 mb-3">生活中的邏輯：</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-stone-100 rounded transition" onclick="toggleRain(true)">
+                            <div class="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full font-bold">A</div>
+                            <div>如果 <b>下雨</b> 🌧️ <span class="text-gray-400">-></span> 帶雨傘 ☔</div>
+                        </div>
+                        <div class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-stone-100 rounded transition" onclick="toggleRain(false)">
+                            <div class="w-8 h-8 flex items-center justify-center bg-orange-100 text-orange-600 rounded-full font-bold">B</div>
+                            <div>否則 <b>(沒下雨)</b> ☀️ <span class="text-gray-400">-></span> 直接出門 🏃</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div id="rain-feedback" class="text-6xl mb-4 transition-all duration-300">🤔</div>
+                    <p id="rain-text" class="font-bold text-xl text-gray-700">點擊左側情境來做決定</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="max-w-4xl mx-auto mb-12">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">3. 語法實驗室 (Syntax Workshop)</h2>
+        
+        <div class="flex space-x-2 mb-6 overflow-x-auto pb-2">
+            <button onclick="switchTab('single')" id="tab-single" class="tab-btn px-6 py-2 rounded-full bg-blue-600 text-white font-medium shadow transition-all hover:bg-blue-700">單分支 (if)</button>
+            <button onclick="switchTab('double')" id="tab-double" class="tab-btn px-6 py-2 rounded-full bg-white text-gray-600 font-medium border border-gray-200 hover:bg-gray-50 transition-all">雙分支 (if-else)</button>
+            <button onclick="switchTab('multi')" id="tab-multi" class="tab-btn px-6 py-2 rounded-full bg-white text-gray-600 font-medium border border-gray-200 hover:bg-gray-50 transition-all">多分支 (if-elif-else)</button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 min-h-[500px]">
+            
+            <div id="content-single" class="branch-content">
+                <div class="mb-6 border-l-4 border-blue-500 pl-4">
+                    <h3 class="text-xl font-bold text-gray-800">單分支 (If Statement)</h3>
+                    <p class="text-gray-600">情境：只有「滿足條件」時才做事，不滿足就直接跳過。 <span class="text-red-500 font-bold">(注意: 及格分數現為 50 分)</span></p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="flex flex-col items-center bg-stone-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-500 mb-4 text-sm tracking-wide">邏輯流程圖</h4>
+                        <div class="flex flex-col items-center w-full">
+                            <div class="flowchart-rect">開始</div>
+                            <div class="arrow-path"></div>
+                            <div class="flowchart-diamond" id="single-diamond">
+                                <div class="flowchart-content">分數 >= 50?</div>
+                            </div>
+                            
+                            <div class="flex w-full justify-between items-start mt-2">
+                                <div class="flex flex-col items-center w-1/2 pr-2">
+                                    <div class="text-green-600 text-sm font-bold mb-1 -mt-4">✓ True</div>
+                                    <div class="arrow-path w-full -mt-2"></div>
+                                    <div class="flowchart-rect bg-green-100 border-green-400" id="single-action">執行: 顯示 "Pass"</div>
+                                    <div class="text-xs text-gray-400 h-[50px] flex items-center justify-center pt-2"></div> 
+                                </div>
+                                
+                                <div class="flex flex-col items-center w-1/2 pl-2">
+                                    <div class="text-red-500 text-sm font-bold mb-1 -mt-4">✗ False</div>
+                                    <div class="arrow-path w-full opacity-0"></div> <div class="text-xs text-gray-400 h-[50px] flex items-center justify-center pt-2">--- (跳過) ---</div> 
+                                </div>
+                            </div>
+
+                            <div class="flow-merge-point">
+                                <div class="path-line-left" id="single-merge-left"></div>
+                                <div class="path-line-right" id="single-merge-right"></div>
+                                <div class="arrow-head">↓</div>
+                            </div>
+
+                            <div class="flowchart-rect mt-[-20px]">結束</div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-gray-900 rounded-lg p-4 text-gray-200 text-sm shadow-lg font-mono leading-relaxed">
+                            <div class="text-gray-500"># 範例：及格判斷 (50分合格)</div>
+                            <div>score = <span id="code-single-val" class="text-purple-400">45</span></div>
+                            <div id="line-single-1" class="pl-0 transition-colors duration-200">
+                                <span class="text-pink-500">if</span> score >= <span class="text-orange-400">50</span>:
+                            </div>
+                            <div id="line-single-2" class="pl-4 transition-colors duration-200">
+                                print(<span class="text-green-400">"Pass"</span>)
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50 p-6 rounded-lg border border-blue-100">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">試試看：輸入分數</label>
+                            <input type="range" min="0" max="100" value="45" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-2" id="single-slider" oninput="updateSingle()">
+                            <div class="flex justify-between items-center">
+                                <span class="text-2xl font-bold text-blue-600" id="single-display">45</span>
+                                <span class="px-3 py-1 bg-white rounded shadow text-sm font-bold" id="single-status">不及格 (無動作)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-double" class="branch-content hidden">
+                <div class="mb-6 border-l-4 border-purple-500 pl-4">
+                    <h3 class="text-xl font-bold text-gray-800">雙分支 (If-Else)</h3>
+                    <p class="text-gray-600">情境：二選一 (非黑即白)。條件成立走這條路，否則走另一條路。</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="flex flex-col items-center bg-stone-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-500 mb-4 text-sm tracking-wide">邏輯流程圖</h4>
+                        <div class="flex flex-col items-center">
+                            <div class="flowchart-rect">開始</div>
+                            <div class="arrow-path"></div>
+                            <div class="flowchart-diamond" id="double-diamond">
+                                <div class="flowchart-content">年齡 >= 12?</div>
+                            </div>
+                            <div class="flex w-full justify-around mt-[-10px] relative z-10 px-4">
+                                <div class="text-green-600 text-sm font-bold bg-white px-1 ml-[-20px]">✓ True</div>
+                                <div class="text-red-500 text-sm font-bold bg-white px-1 mr-[-20px]">✗ False</div>
+                            </div>
+                            
+                            <div class="flex w-full justify-between mt-2">
+                                <div class="flex flex-col items-center w-1/2 border-r border-gray-200 pr-2">
+                                    <div class="arrow-path w-full"></div>
+                                    <div class="flowchart-rect bg-green-100 border-green-400" id="double-action-true">買全票 ($100)</div>
+                                </div>
+                                <div class="flex flex-col items-center w-1/2 pl-2">
+                                    <div class="arrow-path w-full"></div>
+                                    <div class="flowchart-rect bg-yellow-100 border-yellow-400" id="double-action-false">買兒童票 ($50)</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flow-merge-point">
+                                <div class="path-line-left" id="double-merge-left"></div>
+                                <div class="path-line-right" id="double-merge-right"></div>
+                                <div class="arrow-head">↓</div>
+                            </div>
+
+                            <div class="flowchart-rect mt-[-20px]">結束</div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-gray-900 rounded-lg p-4 text-gray-200 text-sm shadow-lg font-mono leading-relaxed">
+                            <div class="text-gray-500"># 範例：門票檢查</div>
+                            <div>age = <span id="code-double-val" class="text-purple-400">10</span></div>
+                            <div id="line-double-1" class="pl-0 transition-colors duration-200">
+                                <span class="text-pink-500">if</span> age >= <span class="text-orange-400">12</span>:
+                            </div>
+                            <div id="line-double-2" class="pl-4 transition-colors duration-200">
+                                print(<span class="text-green-400">"全票"</span>)
+                            </div>
+                            <div id="line-double-3" class="pl-0 transition-colors duration-200">
+                                <span class="text-pink-500">else</span>:
+                            </div>
+                            <div id="line-double-4" class="pl-4 transition-colors duration-200">
+                                print(<span class="text-green-400">"兒童票"</span>)
+                            </div>
+                        </div>
+
+                        <div class="bg-purple-50 p-6 rounded-lg border border-purple-100">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">輸入年齡：</label>
+                            <div class="flex items-center space-x-4">
+                                <button onclick="changeAge(-1)" class="w-10 h-10 rounded-full bg-white border border-gray-300 flex items-center justify-center font-bold hover:bg-gray-100">-</button>
+                                <span class="text-3xl font-bold text-purple-600 w-16 text-center" id="double-age-display">10</span>
+                                <button onclick="changeAge(1)" class="w-10 h-10 rounded-full bg-white border border-gray-300 flex items-center justify-center font-bold hover:bg-gray-100">+</button>
+                            </div>
+                            <div class="mt-4 p-3 bg-white rounded border border-gray-200 text-center font-bold text-gray-700">
+                                結果：<span id="double-result-text">兒童票</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-multi" class="branch-content hidden">
+                <div class="mb-6 border-l-4 border-emerald-500 pl-4">
+                    <h3 class="text-xl font-bold text-gray-800">多分支 (If-Elif-Else)</h3>
+                    <p class="text-gray-600">情境：多種可能性 (成績分級)。程式由上往下檢查，一旦有一個成立，就跳出。 <span class="text-red-500 font-bold">(注意: 及格分數現為 50 分)</span></p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="flex flex-col items-center bg-stone-50 p-4 rounded-lg w-full">
+                        <h4 class="font-bold text-gray-500 mb-2 text-sm tracking-wide w-full text-center">邏輯分佈圖 (50分及格)</h4>
+                        <p class="text-xs text-gray-500 mb-2 text-center">看程式如何將連續的分數「切」成不同等級</p>
+                        
+                        <div class="chart-container">
+                            <canvas id="multiBranchChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-gray-900 rounded-lg p-4 text-gray-200 text-sm shadow-lg font-mono leading-relaxed">
+                            <div class="text-gray-500"># 範例：成績評級 (90分優異，50分及格)</div>
+                            <div>score = <span id="code-multi-val" class="text-purple-400">75</span></div>
+                            
+                            <div id="line-multi-1" class="pl-0 transition-colors duration-200">
+                                <span class="text-pink-500">if</span> score >= <span class="text-orange-400">90</span>:
+                            </div>
+                            <div id="line-multi-2" class="pl-4 transition-colors duration-200">
+                                print(<span class="text-green-400">"優異 A"</span>)
+                            </div>
+                            
+                            <div id="line-multi-3" class="pl-0 transition-colors duration-200">
+                                <span class="text-pink-500">elif</span> score >= <span class="text-orange-400">50</span>:
+                            </div>
+                            <div id="line-multi-4" class="pl-4 transition-colors duration-200">
+                                print(<span class="text-green-400">"及格 Pass"</span>)
+                            </div>
+                            
+                            <div id="line-multi-5" class="pl-0 transition-colors duration-200">
+                                <span class="text-pink-500">else</span>:
+                            </div>
+                            <div id="line-multi-6" class="pl-4 transition-colors duration-200">
+                                print(<span class="text-green-400">"不及格 Fail"</span>)
+                            </div>
+                        </div>
+
+                        <div class="bg-emerald-50 p-6 rounded-lg border border-emerald-100">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">拖動分數滑桿：</label>
+                            <input type="range" min="0" max="100" value="75" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-2 accent-emerald-600" id="multi-slider" oninput="updateMulti()">
+                            <div class="flex justify-between items-center">
+                                <span class="text-3xl font-bold text-emerald-600" id="multi-display">75</span>
+                                <span class="px-4 py-2 bg-white rounded shadow text-lg font-bold border-l-4 border-yellow-400" id="multi-result-text">及格 Pass</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="max-w-4xl mx-auto mb-12">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">4. 實戰演練 (Challenge)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg text-gray-700">挑戰 1: 遊樂園門票</h3>
+                    <span class="text-xs font-bold bg-blue-100 text-blue-600 px-2 py-1 rounded">雙分支</span>
+                </div>
+                <p class="text-sm text-gray-600 mb-4">請完成代碼，如果年齡大於等於 12 歲買全票，否則買兒童票。</p>
+                <div class="bg-gray-100 p-4 rounded text-sm font-mono mb-4">
+                    age = int(input())<br>
+                    if age <input type="text" id="quiz-1-op" class="quiz-input-field w-12" placeholder="?"> 12:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;print("全票")<br>
+                    <input type="text" id="quiz-1-kw" class="quiz-input-field w-16" placeholder="?">:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;print("兒童票")
+                </div>
+                <button onclick="checkQuiz1()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">檢查答案</button>
+                <p id="quiz-1-msg" class="mt-2 text-center text-sm font-bold min-h-[20px]"></p>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg text-gray-700">挑戰 2: 代碼重構與縮排特訓</h3>
+                    <span class="text-xs font-bold bg-emerald-100 text-emerald-600 px-2 py-1 rounded">自由編輯</span>
+                </div>
+                <p class="text-sm text-gray-600 mb-4">
+                    請在下方編輯器中，完成 if-else 語句，正確判斷分數是否及格 (>= 50)。<br>
+                    <span class="text-red-500 font-bold">⚠️ 提醒：請務必使用「4 個空格」進行縮排！</span>
+                </p>
+                
+                <textarea id="quiz-2-code-editor" rows="7" class="w-full bg-gray-900 text-green-400 p-3 rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" placeholder="score = 65 # 範例分數&#10;if ...&#10;    print(...)&#10;else:&#10;    print(...)">score = 65 # 範例分數
+</textarea>
+                
+                <button onclick="checkQuiz2()" class="w-full bg-emerald-500 text-white py-2 rounded hover:bg-emerald-600 transition mt-4">檢查答案</button>
+                <p id="quiz-2-msg" class="mt-2 text-center text-sm font-bold min-h-[20px] whitespace-pre-line"></p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="max-w-4xl mx-auto mb-12 text-center bg-stone-100 p-8 rounded-xl">
+        <h2 class="text-xl font-bold text-gray-700 mb-4">本節總結</h2>
+        <ul class="text-left inline-block space-y-2 text-gray-600">
+            <li>✅ <b>出行模擬器</b>：體驗條件判斷如何影響最終結果。</li>
+            <li>✅ <b>布林值 (Boolean)</b>：學會電腦如何進行比較並返回 True/False。</li>
+            <li>✅ <b>單分支 (if)</b>：只有一條路，符合才走，不符合則即直跳過。</li>
+            <li>✅ <b>雙分支 (if-else)</b>：二選一，非 A 即 B。</li>
+            <li>✅ <b>多分支 (if-elif-else)</b>：多選一，由上往下檢查，只執行第一個符合的區塊。</li>
+            <li>⚠️ <b>重要提醒</b>：記得縮排 (Indentation) 和 冒號 (:)！不要使用全形標點符號。</li>
+        </ul>
+    </footer>
+
+    <script>
+        // =========================================================
+        // 0. School Commute Simulator Logic (上學出行模擬器)
+        // =========================================================
+        const LATE_TIME_MINUTES = 9 * 60 + 30; // 9:30 AM
+        const START_TIME_MINUTES = 8 * 60 + 40; // 8:40 AM
+        
+        let currentTimeSim = START_TIME_MINUTES; // 總分鐘數 (從午夜開始計算)
+        let currentStepSim = 1;
+        let hasUmbrella = false;
+        let isWeatherChecked = false;
+
+        // 模擬器步驟和選項
+        const stepsSim = [
+            // Index 0: Placeholder
+            { text: "", choices: [] },
+            
+            // Index 1: Step 1: 早上起床 (8:40)
+            { 
+                text: "鬧鐘響起，現在是早上 8 點 40 分。你會選擇：",
+                choices: [
+                    { label: "A. 馬上起床 🧘", time: 0 },
+                    { label: "B. 再睡 5 分鐘 😴", time: 5 }
+                ]
+            },
+            
+            // Index 2: Step 2: 洗漱換衣 (時間已更新: 10/30 分鐘)
+            { 
+                text: "起床後，你需要整理儀容。你會選擇：",
+                choices: [
+                    { label: "A. 簡單洗漱、換衣 🚿", time: 10 }, // UPDATED: 10 minutes
+                    { label: "B. 洗漱、沖涼、洗頭、吹頭、換衣 🛁", time: 30 } // UPDATED: 30 minutes
+                ]
+            },
+
+            // Index 3: Step 3: 天氣報導 (Conditional Gate)
+            { 
+                text: `準備出門前，你決定查看一下今天的資訊。你會選擇：\n\n（如果查看，報導會告訴你快要下雨。）`,
+                choices: [
+                    { label: "A. 查看天氣報導 📰", time: 5, action: () => { isWeatherChecked = true; } },
+                    { label: "B. 不看天氣報導，直接準備出門 🚀", time: 0, action: () => { isWeatherChecked = false; } }
+                ]
+            },
+
+            // Index 4: Step 4 (Dynamic Umbrella Choice Placeholder) - This index is used for the dynamic step only.
+            { text: "Dynamic Umbrella Decision Point", choices: [] },
+            
+            // Index 5: Step 5: 選擇交通工具 (Final time addition - 的士改為走路)
+            { 
+                text: "一切準備就緒，是時候前往學校了。你會選擇哪種交通工具？",
+                choices: [
+                    { label: "A. 巴士 🚌", time: 30 },
+                    { label: "B. 電單車 🏍️", time: 15 },
+                    { label: "C. 走路 🚶", time: 40 } // UPDATED: 走路 40 分鐘
+                ]
+            }
+        ];
+
+        // HTML 元素 (Simulator)
+        let timeDisplaySimEl;
+        let scenarioTextSimEl;
+        let choiceButtonsSimEl;
+        let simulatorAppEl;
+        let weatherStatusEl, umbrellaStatusEl, stateStatusEl; // NEW Status Elements
+
+        // 函式: 時間格式化
+        function formatTime(totalMinutes) {
+            const hours = Math.floor(totalMinutes / 60) % 24;
+            const minutes = totalMinutes % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(0, '0')}`;
+        }
+
+        // 函式: 更新狀態面板 (NEW)
+        function updateStatusPanelSim(step) {
+            if (!weatherStatusEl || !umbrellaStatusEl || !stateStatusEl) return;
+
+            // 1. Weather Status - 只有在 Step 3 做出選擇之後 (即 step >= 4) 才顯示非問號狀態
+            if (step >= 4) {
+                if (isWeatherChecked) {
+                    // 已查看報導
+                    weatherStatusEl.innerHTML = `<span class="text-2xl">🌦️</span><br>已知: 快下雨`;
+                    weatherStatusEl.className = 'status-box bg-orange-100 text-orange-800 transition duration-300';
+                } else {
+                    // 未查看報導 - 保持未知狀態 (根據用戶要求移除「未知: 晴天」的推測)
+                    weatherStatusEl.innerHTML = `<span class="text-2xl">❓</span><br>未知`;
+                    weatherStatusEl.className = 'status-box bg-gray-100 text-gray-800 transition duration-300';
+                }
+            } else {
+                // Initial state (Step 1, 2, 3) - 保持初始中性狀態
+                weatherStatusEl.innerHTML = `<span class="text-2xl">❓</span><br>天氣狀態`;
+                weatherStatusEl.className = 'status-box bg-gray-100 text-gray-800 transition duration-300';
+            }
+            
+            // 2. Umbrella Status - 只有在有帶傘時才明確顯示狀態
+            if (hasUmbrella) {
+                umbrellaStatusEl.innerHTML = `<span class="text-2xl">✅ ☔</span><br>已帶傘`;
+                umbrellaStatusEl.className = 'status-box bg-green-100 text-green-800 transition duration-300';
+            } else {
+                // 未帶傘時，顯示中性/問號狀態
+                umbrellaStatusEl.innerHTML = `<span class="text-2xl">❓</span><br>雨傘狀態`;
+                umbrellaStatusEl.className = 'status-box bg-gray-100 text-gray-800 transition duration-300';
+            }
+
+            // 3. State Status (Based on current time relative to late time)
+            let icon, text, color;
+
+            if (currentTimeSim >= LATE_TIME_MINUTES) {
+                icon = '🛑'; text = '已遲到'; color = 'bg-red-200 text-red-900';
+            } else if (currentTimeSim >= LATE_TIME_MINUTES - 15) { // Within 15 minutes of being late
+                icon = '💨'; text = '快遲到！'; color = 'bg-red-100 text-red-800';
+            } else if (currentTimeSim >= START_TIME_MINUTES + 20) { // Used more than 20 mins
+                icon = '🚶'; text = '趕時間'; color = 'bg-yellow-100 text-yellow-800';
+            } else {
+                icon = '🧘'; text = '悠閒中'; color = 'bg-green-100 text-green-800';
+            }
+            stateStatusEl.innerHTML = `<span class="text-2xl">${icon}</span><br>${text}`;
+            stateStatusEl.className = 'status-box ' + color + ' transition duration-300';
+        }
+
+        // 函式: 更新 UI
+        function updateSimUI() {
+            if (!timeDisplaySimEl) return; // Guard clause for initialization
+
+            timeDisplaySimEl.textContent = formatTime(currentTimeSim);
+            updateStatusPanelSim(currentStepSim); // Always update panel
+
+            // 當 currentStepSim 大於陣列最大索引 (5) 時，遊戲結束
+            if (currentStepSim > stepsSim.length - 1) { 
+                showResultSim();
+                return;
+            }
+
+            const step = stepsSim[currentStepSim];
+            scenarioTextSimEl.textContent = step.text;
+            choiceButtonsSimEl.innerHTML = ''; // 清空按鈕
+
+            // 渲染選項按鈕
+            step.choices.forEach(choice => {
+                const button = document.createElement('button');
+                button.textContent = choice.label;
+                // Add a subtle scale effect on hover for better feel
+                button.className = 'w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-150 ease-in-out shadow-md hover:shadow-lg transform hover:scale-[1.01]';
+                button.onclick = () => nextStepSim(choice.time, choice.action);
+                choiceButtonsSimEl.appendChild(button);
+            });
+        }
+        
+        // 函式: 處理下一步驟 (新增時間流逝的視覺脈衝)
+        function nextStepSim(timeSpent, action = null) {
+            // 視覺脈衝：強調時間的流逝
+            if (timeSpent > 0) {
+                simulatorAppEl.classList.add('animate-pulse-time');
+                setTimeout(() => {
+                    simulatorAppEl.classList.remove('animate-pulse-time');
+                }, 500);
+            }
+
+            // 1. 執行動作 (例如設定 isWeatherChecked)
+            if (action) {
+                action();
+            }
+
+            // 2. 更新時間
+            currentTimeSim += timeSpent;
+            
+            // 3. 處理特殊的步驟流程 (條件語句的核心應用 - 讓流程跳過或加入 Step 4)
+            if (currentStepSim === 3) {
+                // Step 3 (天氣檢查) 結束
+                if (isWeatherChecked) {
+                    // 看過報導，進入 Dynamic Step 4: 帶傘選擇 (Index 4)
+                    currentStepSim = 4;
+                    showUmbrellaChoice();
+                } else {
+                    // 沒看報導，跳過 Dynamic Step 4，直接進入 Step 5: 交通工具 (Index 5)
+                    currentStepSim = 5;
+                    updateSimUI(); 
+                }
+                return; // 流程已經被特殊處理，跳過自動遞增 currentStepSim
+
+            } else if (currentStepSim === 4) {
+                // Step 4 (帶傘選擇) 結束，無論有無帶傘，下一步都進入 Step 5: 交通工具 (Index 5)
+                currentStepSim = 5;
+                updateSimUI();
+                return; // 流程已經被特殊處理，跳過自動遞增 currentStepSim
+            }
+
+            // 4. 正常推進步驟 (當前為 Step 1, 2)
+            currentStepSim++;
+            updateSimUI();
+        }
+
+        // 函式: 顯示帶傘選擇 (Step 4 - 動態生成，因為 stepsSim[4] 只是個佔位符)
+        function showUmbrellaChoice() {
+            scenarioTextSimEl.textContent = `你看了天氣報導，得知快要下雨了。這是你的 **條件判斷點 (Conditional Gate)**！你會選擇：`;
+            choiceButtonsSimEl.innerHTML = '';
+            
+            // 帶傘選項 (設置 hasUmbrella = true)
+            const bringButton = document.createElement('button');
+            bringButton.textContent = "A. 帶上雨傘 (0 分鐘) ☔";
+            bringButton.className = 'w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-150 ease-in-out shadow-md hover:shadow-lg transform hover:scale-[1.01]';
+            bringButton.onclick = () => {
+                hasUmbrella = true;
+                nextStepSim(0); 
+            };
+            choiceButtonsSimEl.appendChild(bringButton);
+
+            // 不帶傘選項 (設置 hasUmbrella = false)
+            const skipButton = document.createElement('button');
+            skipButton.textContent = "B. 不帶雨傘 (0 分鐘) 🙅‍♂️";
+            // 由於用戶要求未帶傘不顯示明確的錯誤狀態，這裡使用一個中性但有暗示的顏色
+            skipButton.className = 'w-full bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-150 ease-in-out shadow-md hover:shadow-lg transform hover:scale-[1.01]';
+            skipButton.onclick = () => {
+                hasUmbrella = false;
+                nextStepSim(0); 
+            };
+            choiceButtonsSimEl.appendChild(skipButton);
+        }
+
+        // 函式: 顯示結果 (強化淋濕條件)
+        function showResultSim() {
+            const isLate = currentTimeSim > LATE_TIME_MINUTES; // 9:30 AM 判斷是否遲到
+            const arrivalTime = formatTime(currentTimeSim);
+            
+            let resultTitle = "";
+            let resultMessage = "";
+            let resultColor = "";
+            let rainStatusIcon = "";
+
+            // 核心條件判斷 (if-elif-else 邏輯)
+            // 當 isWeatherChecked=false (沒看報導)，但 isLate=false (準時) 且 hasUmbrella=false (沒帶傘)
+            // 流程走到這一步時，如果 isWeatherChecked=false，則 hasUmbrella 必然是 false，因為沒看報導直接跳過了帶傘的步驟。
+            if (!isLate && hasUmbrella) {
+                // 好結局: 準時 AND 有帶傘
+                resultTitle = "【好結局】☀️ 準時且有準備！";
+                resultMessage = `你於 ${arrivalTime} 到達學校，沒有遲到。你查看了天氣並帶了傘，在雨中保持了乾爽。完美的一天！`;
+                resultColor = "bg-green-100 border-green-500 text-green-700";
+                rainStatusIcon = "✅ 乾爽無虞";
+            } else if (!isLate && !hasUmbrella) {
+                // 普通結局: 準時 AND 沒帶傘 (全身濕透但是沒遲到)
+                resultTitle = "【普通結局】🌧️ 準時但全身濕透了！";
+                resultMessage = `你於 ${arrivalTime} 到達學校，沒有遲到。可惜你沒有帶傘，到達時全身濕透，但至少你趕上了。`;
+                resultColor = "bg-yellow-100 border-yellow-500 text-yellow-700";
+                rainStatusIcon = "❌ 全身濕透";
+            } else if (isLate && !hasUmbrella) {
+                // 壞結局: 遲到 AND 沒帶傘 (遲到又全身濕透了)
+                resultTitle = "【壞結局】🚨 遲到又全身濕透了！";
+                resultMessage = `你於 ${arrivalTime} 到達學校，已經遲到！更糟的是，你沒有帶傘，全身濕透，還得被訓導主任罵。糟透了！`;
+                resultColor = "bg-red-100 border-red-500 text-red-700";
+                rainStatusIcon = "❌ 全身濕透";
+            } else { // isLate && hasUmbrella
+                // 中性結局: 遲到 AND 有帶傘
+                resultTitle = "【遲到結局】☔ 雖然遲到但保持乾爽。";
+                resultMessage = `你於 ${arrivalTime} 到達學校，已經遲到！幸好你帶了傘，沒有淋濕。雖然乾爽，但你錯過了早上的重要課堂。`;
+                resultColor = "bg-blue-100 border-blue-500 text-blue-700";
+                rainStatusIcon = "✅ 乾爽無虞";
+            }
+
+            // 渲染結果頁面
+            simulatorAppEl.innerHTML = `
+                <div class="flex flex-col items-center text-center">
+                    <h1 class="text-3xl font-extrabold text-gray-900 mb-6">模擬結束！</h1>
+                    
+                    <div class="w-full p-6 border-4 rounded-xl ${resultColor} mb-6">
+                        <p class="text-2xl font-bold mb-3">${resultTitle}</p>
+                        <p class="text-lg">${resultMessage}</p>
+                    </div>
+
+                    <div class="flex space-x-8 text-center mb-8">
+                        <div class="p-3 bg-white rounded-lg shadow-inner border border-gray-200">
+                            <p class="text-lg text-gray-700">最終時間</p>
+                            <span class="font-bold text-3xl text-indigo-600">${arrivalTime}</span>
+                            <p class="text-sm text-gray-500">${isLate ? '(遲到)' : '(準時)'}</p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg shadow-inner border border-gray-200">
+                            <p class="text-lg text-gray-700">淋雨狀態</p>
+                            <span class="font-bold text-3xl text-emerald-600">${rainStatusIcon}</span>
+                            <p class="text-sm text-gray-500">${hasUmbrella ? '有帶傘' : '沒帶傘'}</p>
+                        </div>
+                    </div>
+
+
+                    <button onclick="restartGameSim()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-full transition duration-150 ease-in-out shadow-lg hover:shadow-xl">
+                        🔄 重新開始模擬
+                    </button>
+                </div>
+            `;
+        }
+        
+        // 函式: 重新開始
+        function restartGameSim() {
+            currentTimeSim = START_TIME_MINUTES;
+            currentStepSim = 1;
+            hasUmbrella = false;
+            isWeatherChecked = false;
+            
+            // Reset the HTML structure back to the game state (Keep the status panel) - 確保初始狀態符合用戶要求
+            simulatorAppEl.innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <div class="time-display-sim">
+                        ⏰ 時間: <span id="current-time-sim">08:40</span>
+                    </div>
+                    <h1 class="text-xl font-bold text-gray-800">🚦 決策中...</h1>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-4 mb-8 text-center">
+                    <div id="weather-status-sim" class="status-box bg-gray-100 text-gray-800 transition duration-300">
+                        <span class="text-2xl">❓</span><br>天氣狀態
+                    </div>
+                    <div id="umbrella-status-sim" class="status-box bg-gray-100 text-gray-800 transition duration-300">
+                        <span class="text-2xl">❓</span><br>雨傘狀態
+                    </div>
+                    <div id="state-status-sim" class="status-box bg-yellow-100 text-yellow-800 transition duration-300">
+                        <span class="text-2xl">🏃</span><br>個人狀態
+                    </div>
+                </div>
+
+                <div id="game-content-sim">
+                    <p id="scenario-text-sim" class="text-lg mb-8 text-gray-700 leading-relaxed"></p>
+                    <div id="choice-buttons-sim" class="space-y-4"></div>
+                </div>
+            `;
+            // Re-assign elements after innerHTML reset (CRITICAL)
+            timeDisplaySimEl = document.getElementById('current-time-sim');
+            scenarioTextSimEl = document.getElementById('scenario-text-sim');
+            choiceButtonsSimEl = document.getElementById('choice-buttons-sim');
+            simulatorAppEl = document.getElementById('simulator-app');
+            // Re-assign new status elements
+            weatherStatusEl = document.getElementById('weather-status-sim');
+            umbrellaStatusEl = document.getElementById('umbrella-status-sim');
+            stateStatusEl = document.getElementById('state-status-sim');
+
+            updateSimUI();
+        }
+
+        // 啟動遊戲
+        function startSimulator() {
+            // Initial element assignment
+            timeDisplaySimEl = document.getElementById('current-time-sim');
+            scenarioTextSimEl = document.getElementById('scenario-text-sim');
+            choiceButtonsSimEl = document.getElementById('choice-buttons-sim');
+            simulatorAppEl = document.getElementById('simulator-app');
+            // Initial status elements assignment
+            weatherStatusEl = document.getElementById('weather-status-sim');
+            umbrellaStatusEl = document.getElementById('umbrella-status-sim');
+            stateStatusEl = document.getElementById('state-status-sim');
+            
+            updateSimUI();
+        }
+
+        // =========================================================
+        // 1. Boolean Logic
+        // =========================================================
+        function checkBoolean() {
+            const n1Raw = document.getElementById('bool-num1').value.trim();
+            const n2Raw = document.getElementById('bool-num2').value.trim();
+            
+            const n1 = (n1Raw !== '' && !isNaN(n1Raw) && isFinite(n1Raw)) ? Number(n1Raw) : n1Raw;
+            const n2 = (n2Raw !== '' && !isNaN(n2Raw) && isFinite(n2Raw)) ? Number(n2Raw) : n2Raw;
+
+            const op = document.getElementById('bool-op').value;
+            let res = false;
+            
+            try {
+                if (op === '>') res = n1 > n2;
+                else if (op === '<') res = n1 < n2;
+                else if (op === '==') res = n1 == n2; 
+                else if (op === '!=') res = n1 != n2;
+                else if (op === '>=') res = n1 >= n2;
+                else if (op === '<=') res = n1 <= n2;
+                else res = false;
+            } catch (e) {
+                console.error("Comparison error:", e);
+                res = "Error";
+            }
+
+            const resEl = document.getElementById('bool-result');
+            if (res === "Error") {
+                resEl.innerText = "Error";
+                resEl.className = "text-3xl font-mono font-bold text-gray-500";
+            } else {
+                resEl.innerText = res ? "True" : "False";
+                resEl.className = res ? "text-3xl font-mono font-bold text-green-400" : "text-3xl font-mono font-bold text-red-500";
+            }
+        }
+
+        // =========================================================
+        // 2. Rain Introduction Logic
+        // =========================================================
+        function toggleRain(isRaining) {
+            const feedback = document.getElementById('rain-feedback');
+            const text = document.getElementById('rain-text');
+            
+            if (isRaining) {
+                feedback.innerText = "☔";
+                text.innerText = "下雨了！執行動作：帶雨傘。";
+                text.className = "font-bold text-xl text-blue-600";
+            } else {
+                feedback.innerText = "🏃";
+                text.innerText = "沒下雨！執行動作：直接出門。";
+                text.className = "font-bold text-xl text-orange-600";
+            }
+        }
+
+        // =========================================================
+        // 3. Syntax Workshop Logic
+        // =========================================================
+        function switchTab(tab) {
+            // Hide all contents
+            ['single', 'double', 'multi'].forEach(t => {
+                document.getElementById('content-' + t).classList.add('hidden');
+                document.getElementById('tab-' + t).classList.remove('bg-blue-600', 'text-white');
+                document.getElementById('tab-' + t).classList.add('bg-white', 'text-gray-600');
+            });
+            
+            // Show selected
+            document.getElementById('content-' + tab).classList.remove('hidden');
+            document.getElementById('tab-' + tab).classList.remove('bg-white', 'text-gray-600');
+            document.getElementById('tab-' + tab).classList.add('bg-blue-600', 'text-white');
+
+            // Resize charts if needed
+            if(tab === 'multi' && window.multiChart) {
+                window.multiChart.resize();
+            }
+        }
+
+        // Helper function to reset and set classes for flowchart
+        function resetFlowchartStyles(diamond, actionTrue, actionFalse, mergeLeft, mergeRight) {
+            // Reset Diamond
+            diamond.style.backgroundColor = '#fffbeb'; // Default color
+            diamond.style.borderColor = '#d97706'; // Default border
+            diamond.classList.remove('true-path');
+
+            // Reset True Action
+            actionTrue.style.opacity = '0.3';
+            actionTrue.classList.remove('true-action');
+            actionTrue.classList.remove('bg-green-300', 'border-green-600', 'font-bold');
+            actionTrue.classList.add('bg-green-100', 'border-green-400');
+
+            // Reset False Action (Double only)
+            if (actionFalse) {
+                actionFalse.style.opacity = '0.3';
+                actionFalse.classList.remove('bg-yellow-300', 'border-yellow-600', 'font-bold');
+                actionFalse.classList.add('bg-yellow-100', 'border-yellow-400');
+            }
+
+            // Reset Merge Lines
+            if (mergeLeft) mergeLeft.style.borderColor = '#9ca3af'; // Gray
+            if (mergeRight) mergeRight.style.borderColor = '#9ca3af'; // Gray
+        }
+
+        // 3a. Single Branch Logic (合格分數: 50)
+        const PASS_SCORE_SINGLE = 50;
+        function updateSingle() {
+            const score = parseInt(document.getElementById('single-slider').value);
+            document.getElementById('single-display').innerText = score;
+            document.getElementById('code-single-val').innerText = score;
+            document.getElementById('line-single-1').innerHTML = `<span class="text-pink-500">if</span> score >= <span class="text-orange-400">${PASS_SCORE_SINGLE}</span>:`;
+
+            const status = document.getElementById('single-status');
+            const diamond = document.getElementById('single-diamond');
+            const action = document.getElementById('single-action');
+            const mergeLeft = document.getElementById('single-merge-left');
+            const mergeRight = document.getElementById('single-merge-right');
+
+            const line1 = document.getElementById('line-single-1');
+            const line2 = document.getElementById('line-single-2');
+            
+            // Reset styles
+            [line1, line2].forEach(l => l.classList.remove('highlight-line'));
+            resetFlowchartStyles(diamond, action, null, mergeLeft, mergeRight);
+
+            // Simulate logic execution
+            line1.classList.add('highlight-line');
+            
+            if (score >= PASS_SCORE_SINGLE) {
+                status.innerText = "及格 (Pass)";
+                status.className = "px-3 py-1 bg-green-100 text-green-700 rounded shadow text-sm font-bold";
+                
+                // TRUE PATH VISUAL ENHANCEMENT
+                diamond.classList.add('true-path');
+                action.classList.add('true-action');
+                
+                mergeLeft.style.borderColor = '#059669'; // Highlight merge path
+                mergeRight.style.borderColor = '#9ca3af'; // Gray
+                
+                setTimeout(() => line2.classList.add('highlight-line'), 100);
+            } else {
+                status.innerText = "不及格 (無動作)";
+                status.className = "px-3 py-1 bg-red-100 text-red-700 rounded shadow text-sm font-bold";
+                
+                // FALSE PATH VISUAL ENHANCEMENT
+                diamond.style.backgroundColor = '#f87171'; // Red 400
+                diamond.style.borderColor = '#dc2626'; // Red 600
+
+                mergeLeft.style.borderColor = '#9ca3af'; // Gray
+                mergeRight.style.borderColor = '#dc2626'; // Highlight skip path (Right side)
+            }
+        }
+
+        // 3b. Double Branch Logic
+        let currentAge = 10;
+        function changeAge(delta) {
+            currentAge += delta;
+            if (currentAge < 0) currentAge = 0;
+            document.getElementById('double-age-display').innerText = currentAge;
+            document.getElementById('code-double-val').innerText = currentAge;
+            updateDouble();
+        }
+        function updateDouble() {
+            const resText = document.getElementById('double-result-text');
+            const diamond = document.getElementById('double-diamond');
+            const actionTrue = document.getElementById('double-action-true');
+            const actionFalse = document.getElementById('double-action-false');
+            const mergeLeft = document.getElementById('double-merge-left');
+            const mergeRight = document.getElementById('double-merge-right');
+
+            const l1 = document.getElementById('line-double-1');
+            const l2 = document.getElementById('line-double-2');
+            const l3 = document.getElementById('line-double-3');
+            const l4 = document.getElementById('line-double-4');
+            
+            // Reset styles
+            [l1,l2,l3,l4].forEach(l => l.classList.remove('highlight-line'));
+            resetFlowchartStyles(diamond, actionTrue, actionFalse, mergeLeft, mergeRight);
+
+            l1.classList.add('highlight-line');
+
+            if (currentAge >= 12) {
+                resText.innerText = "全票 ($100)";
+                resText.className = "font-bold text-green-600";
+                
+                // TRUE PATH VISUAL ENHANCEMENT
+                diamond.classList.add('true-path');
+                actionTrue.classList.add('true-action');
+                
+                mergeLeft.style.borderColor = '#059669'; // Highlight merge path
+
+                setTimeout(() => l2.classList.add('highlight-line'), 100);
+            } else {
+                resText.innerText = "兒童票 ($50)";
+                resText.className = "font-bold text-yellow-600";
+                
+                // FALSE PATH VISUAL ENHANCEMENT
+                diamond.style.backgroundColor = '#f87171'; // Red 400
+                diamond.style.borderColor = '#dc2626'; // Red 600
+
+                actionFalse.style.opacity = '1';
+                actionFalse.classList.remove('bg-yellow-100', 'border-yellow-400');
+                actionFalse.classList.add('bg-yellow-300', 'border-yellow-600', 'font-bold'); // Bolder action box
+                
+                mergeRight.style.borderColor = '#dc2626'; // Highlight merge path
+
+                setTimeout(() => l3.classList.add('highlight-line'), 100);
+                setTimeout(() => l4.classList.add('highlight-line'), 200);
+            }
+        }
+
+        // 3c. Multi Branch Logic & Chart (合格分數: 50)
+        const PASS_SCORE_MULTI = 50;
+        const EXCELLENT_SCORE_MULTI = 90;
+
+        let multiChart;
+        function initMultiChart() {
+            const ctx = document.getElementById('multiBranchChart').getContext('2d');
+            
+            const dataPoints = [];
+            for (let i = 0; i <= 100; i++) {
+                let gradeVal = 0;
+                if (i >= EXCELLENT_SCORE_MULTI) gradeVal = 2;
+                else if (i >= PASS_SCORE_MULTI) gradeVal = 1;
+                else gradeVal = 0;
+                dataPoints.push({x: i, y: gradeVal});
+            }
+
+            multiChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: '等級階梯',
+                            data: dataPoints,
+                            borderColor: '#10b981',
+                            borderWidth: 2,
+                            stepped: true,
+                            pointRadius: 0,
+                            fill: true,
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)'
+                        },
+                        {
+                            label: '你的分數',
+                            data: [{x: 75, y: 1}],
+                            backgroundColor: '#d97706',
+                            borderColor: '#fff',
+                            borderWidth: 2,
+                            pointRadius: 8,
+                            type: 'scatter'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: '分數 (Score)' }
+                        },
+                        y: {
+                            min: -0.5,
+                            max: 2.5,
+                            ticks: {
+                                callback: function(value) {
+                                    if(value === 0) return '不及格 Fail';
+                                    if(value === 1) return '及格 Pass';
+                                    if(value === 2) return '優異 A';
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+        }
+
+        function updateMulti() {
+            const score = parseInt(document.getElementById('multi-slider').value);
+            document.getElementById('multi-display').innerText = score;
+            document.getElementById('code-multi-val').innerText = score;
+            document.getElementById('line-multi-3').innerHTML = `<span class="text-pink-500">elif</span> score >= <span class="text-orange-400">${PASS_SCORE_MULTI}</span>:`;
+
+            const resText = document.getElementById('multi-result-text');
+            
+            for(let i=1; i<=6; i++) document.getElementById(`line-multi-${i}`).classList.remove('highlight-line');
+
+            let gradeY = 0;
+            let delay = 100;
+            const highlight = (lineNumber) => {
+                setTimeout(() => {
+                    document.getElementById(`line-multi-${lineNumber}`).classList.add('highlight-line');
+                }, delay);
+                delay += 100;
+            };
+            
+            document.getElementById('line-multi-1').classList.add('highlight-line');
+
+            if (score >= EXCELLENT_SCORE_MULTI) {
+                resText.innerText = "優異 (A)";
+                resText.style.borderColor = "#10b981";
+                highlight(2);
+                gradeY = 2;
+            } else {
+                highlight(3);
+                
+                if (score >= PASS_SCORE_MULTI) {
+                    resText.innerText = "及格 (Pass)";
+                    resText.style.borderColor = "#f59e0b";
+                    highlight(4);
+                    gradeY = 1;
+                } else {
+                    highlight(5);
+                    resText.innerText = "不及格 (Fail)";
+                    resText.style.borderColor = "#ef4444";
+                    highlight(6);
+                    gradeY = 0;
+                }
+            }
+
+            if (multiChart) {
+                multiChart.data.datasets[1].data = [{x: score, y: gradeY}];
+                multiChart.update('none');
+            }
+        }
+
+        // =========================================================
+        // 4. Quiz Logic
+        // =========================================================
+        function checkQuiz1() {
+            const op = document.getElementById('quiz-1-op').value.trim();
+            const kw = document.getElementById('quiz-1-kw').value.trim();
+            const msg = document.getElementById('quiz-1-msg');
+
+            // Accept >= or =>
+            const opCorrect = (op === '>=' || op === '=>');
+            // Accept else 
+            const kwCorrect = (kw.toLowerCase() === 'else');
+
+            if (opCorrect && kwCorrect) {
+                msg.innerText = "✅ 正確！你很棒！";
+                msg.className = "mt-2 text-center text-sm font-bold text-green-600";
+            } else {
+                msg.innerText = "❌ 試試看：運算符號是 >=，第二個關鍵字是 else";
+                msg.className = "mt-2 text-center text-sm font-bold text-red-500";
+            }
+        }
+        
+        // Challenge 2 Logic (UPDATED TO TEXTAREA CHECKING)
+        function checkQuiz2() {
+            // 1. Get the entire text content
+            const code = document.getElementById('quiz-2-code-editor').value;
+            const msg = document.getElementById('quiz-2-msg');
+
+            // 2. Define expected patterns (ignore leading/trailing whitespace, but preserve internal 4-space indent)
+            const expectedLines = [
+                'if score >= 50:',
+                '    print("及格 Pass")',
+                'else:',
+                '    print("不及格 Fail")'
+            ];
+            
+            // 3. Normalize and filter the code lines (remove comments, trim blank lines)
+            const lines = code.split('\n')
+                                  .map(line => {
+                                      // Only remove comments from the end
+                                      const cleanLine = line.split('#')[0].trimEnd();
+                                      // Preserve leading spaces if they are not followed by only whitespace
+                                      return cleanLine;
+                                  })
+                                  // Filter out empty lines and the initial score definition (which starts with 'score =')
+                                  .filter(line => line.trim().length > 0 && !line.trim().startsWith('score =')); 
+                                  
+            
+            let isCorrect = true;
+            let hint = "";
+            
+            if (lines.length < 4) {
+                isCorrect = false;
+                hint = "❌ 代碼行數不足，請確保寫出完整的 if-else 結構 (至少包含 if, 縮排 print, else, 縮排 print)。";
+            } else {
+                // Check if the lines match the exact expected content, including indentation
+                // We will look for lines containing the expected pattern to allow for user-added blank lines
+
+                // 1. Check IF line: Should be at the start of a line (no leading spaces)
+                const ifLine = lines.find(l => l.trim().startsWith('if'));
+                if (!ifLine || ifLine.trim() !== expectedLines[0].trim()) {
+                     isCorrect = false;
+                     hint = "❌ 條件判斷行 (if) 語法錯誤或條件不對，正確應為：if score >= 50:";
+                }
+
+                // 2. Check first action line (needs 4 spaces prefix)
+                const printPassLine = lines.find(l => l.includes('print("及格 Pass")'));
+                if (printPassLine) {
+                    if (printPassLine !== expectedLines[1]) {
+                        isCorrect = false;
+                        hint = "❌ 及格輸出行縮排錯誤，請務必使用「4 個空格」！或者語法有誤。";
+                    }
+                } else if (isCorrect) {
+                    isCorrect = false;
+                    hint = "❌ 找不到及格輸出行 (print(\"及格 Pass\"))，請檢查。";
+                }
+                
+                // 3. Check ELSE line: Should be at the start of a line (no leading spaces)
+                const elseLine = lines.find(l => l.trim().startsWith('else'));
+                if (!elseLine || elseLine.trim() !== expectedLines[2].trim()) {
+                     isCorrect = false;
+                     hint = "❌ 處理其餘情況的行 (else) 語法錯誤，正確應為：else:";
+                }
+                
+                // 4. Check second action line (needs 4 spaces prefix)
+                const printFailLine = lines.find(l => l.includes('print("不及格 Fail")'));
+                if (printFailLine) {
+                    if (printFailLine !== expectedLines[3]) {
+                        isCorrect = false;
+                        hint = "❌ 不及格輸出行縮排錯誤，請務必使用「4 個空格」！或者語法有誤。";
+                    }
+                } else if (isCorrect) {
+                    isCorrect = false;
+                    hint = "❌ 找不到不及格輸出行 (print(\"不及格 Fail\"))，請檢查。";
+                }
+            }
+
+            if (isCorrect) {
+                msg.innerText = "✅ 代碼結構、關鍵字和縮排全部正確！";
+                msg.className = "mt-2 text-center text-sm font-bold text-green-600";
+            } else {
+                msg.innerText = hint;
+                msg.className = "mt-2 text-sm font-bold text-red-500 whitespace-pre-line";
+            }
+        }
+
+
+        // Initialize All Components on Load
+        window.onload = function() {
+            // 0. Simulator Init
+            startSimulator();
+            
+            // 1. Boolean Init
+            checkBoolean();
+            
+            // 3. Syntax Workshop Init
+            updateSingle();
+            updateDouble();
+            initMultiChart();
+            
+            // 4. Quiz 2 Init: Set initial value in the editor for guidance
+            const quiz2Editor = document.getElementById('quiz-2-code-editor');
+            if (quiz2Editor && quiz2Editor.value.trim() === 'score = 65 # 範例分數') {
+                quiz2Editor.value = `score = 65 # 範例分數
+
+#填入條件語句關鍵字和、符號和縮排，完成下方程式碼
+score  50
+print("及格 Pass")
+:
+print("不及格 Fail")`;
+            }
+        };
+
+    </script>
+</body>
+</html>
